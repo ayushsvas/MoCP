@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Dec 15 17:56:28 2019
+
+@author: ayush
+"""
+import numpy as np
+import matplotlib.pyplot as plt
+from numba import jit 
+import time 
+
+tim=time.time()
+
+#Henkelman Dimer 
+x=np.linspace(-1,2,100)
+y=np.linspace(-1,2,100)
+Q1,Q2=np.meshgrid(x,y)
+Volt=(1-np.exp(-(Q1-0.3*Q2)**2-8*(0.3*Q1+Q2)**2))*(1-np.exp(-(Q1-1)**2-8*(Q2-1)**2))
+Fx=np.diff(Volt,axis=1)
+Fy=np.diff(Volt,axis=0)
+epsilon=0.1
+def forcex(q1,q2):
+    return -(-(1 - np.exp(-8*(0.3*q1 + q2)**2 - (q1 - 0.3*q2)**2))*(2 - 2*q1)*np.exp(-(q1 - 1)**2 - 8*(q2 - 1)**2) - (1 - np.exp(-(q1 - 1)**2 - 8*(q2 - 1)**2))*(-3.44*q1 - 4.2*q2)*np.exp(-8*(0.3*q1 + q2)**2 - (q1 - 0.3*q2)**2))
+def forcey(q1,q2):
+    return -(-(1 - np.exp(-8*(0.3*q1 + q2)**2 - (q1 - 0.3*q2)**2))*(16 - 16*q2)*np.exp(-(q1 - 1)**2 - 8*(q2 - 1)**2) - (1 - np.exp(-(q1 - 1)**2 - 8*(q2 - 1)**2))*(-4.2*q1 - 16.18*q2)*np.exp(-8*(0.3*q1 + q2)**2 - (q1 - 0.3*q2)**2))
+
+d=0.01
+
+
+R=np.ones((2,1000+1)) #stores x and y values for the time range
+R[0,0]=1;R[1,0]=0.5
+for t in range(1000):
+    for alpha in (0,np.pi,0.01):
+        x1=R[0,t]-d*np.cos(alpha); y1=R[1,t]-d*np.sin(alpha)
+        x2=R[0,t]+d*np.cos(alpha); y2=R[1,t]+d*np.sin(alpha)
+        tau=d*(np.cos(alpha)*(forcey(x2,y2)+forcey(x1,y1))-np.sin(alpha)*(forcex(x2,y2)+forcex(x1,y1)))
+        
+        if tau<1e-8:
+            print(tau)
+            break
+    Fxmid=forcex(R[0,t],R[1,t])
+    Fymid=forcey(R[0,t],R[1,t])
+    F=np.array([Fxmid,Fymid])
+    N=np.array([x2-x1,y2-y1])/2/d
+    F=-F+2*N*np.dot(F,N)
+    R[0,t+1]=R[0,t]+F[0]*epsilon
+    R[1,t+1]=R[1,t]+F[1]*epsilon
+print("Time=",time.time()-tim)
+plt.imshow(np.flipud(Volt),extent=[-1,2,-1,2])
+plt.plot(R[0,:],R[1,:])
+Q1=0
+Q2=0
+print((1-np.exp(-(Q1-0.3*Q2)**2-8*(0.3*Q1+Q2)**2))*(1-np.exp(-(Q1-1)**2-8*(Q2-1)**2)))   
+    
+        
+        
+
+
+
