@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.interpolate import CubicSpline
 import matplotlib.pyplot as plt
-#import matplotlib.animation as animation
+from matplotlib.animation import FuncAnimation, PillowWriter
 from numba import jit
 import time
 
@@ -18,11 +18,15 @@ def F(x,y):
     return np.array([Fx,Fy])
 
 tmax = 10**3
-
+xval = np.linspace(-1,2,10**3)
+X,Y=np.meshgrid(xval,xval)
+pot = V(X,Y)
+N = 1000
+evol = np.zeros((N,2,tmax))
 #@jit(nopython=True)
 def string(tmax):
-    N = 1000
-    #evol = np.zeros((N,2,tmax))
+    
+    
     dt = 1e-2
     Z = np.array([np.linspace(0,1,N),np.linspace(0,1,N)]).T
     for t in range(tmax):
@@ -37,21 +41,33 @@ def string(tmax):
         epsilon = np.append(0,epsilon)
         cs = CubicSpline(epsilon,Z)
         Z = cs(np.linspace(0,1,N))
-        #evol[:,:,t] = Z
+        evol[:,:,t] = Z
     return Z
 
 Z = string(tmax)
-xval = np.linspace(-1,2,10**3)
-X,Y=np.meshgrid(xval,xval)
-pot = V(X,Y)
-#for t in range(tmax):
-plt.imshow(np.flipud(pot), extent=[-1,2,-1,2],cmap='magma')
-plt.colorbar()
-plt.plot(Z[:,0],Z[:,1],'y',linewidth=2)
-plt.plot(np.linspace(0,1,100),np.linspace(0,1,100),'w',linewidth=1)
-plt.plot(0.050733,0.563589,'ko')
-plt.savefig('MEP',dpi=600,bbox_inches='tight')
-plt.show()
+
+
+#@jit(nopython=True)
+def loopy(evol):
+    for t in range(0,tmax,5):
+        plt.imshow(np.flipud(pot), extent=[-1,2,-1,2],cmap='magma')
+        plt.colorbar()
+        plt.plot(evol[:,0,t],evol[:,1,t],'y',linewidth=2)
+        plt.plot(np.linspace(0,1,100),np.linspace(0,1,100),'w',linewidth=1)
+        plt.show()
+
+loopy(evol)
+
+
+
+
+#plt.imshow(np.flipud(pot), extent=[-1,2,-1,2],cmap='magma')
+#plt.colorbar()
+#plt.plot(Z[:,0],Z[:,1],'y',linewidth=2)
+#plt.plot(np.linspace(0,1,100),np.linspace(0,1,100),'w',linewidth=1)
+#plt.plot(0.050733,0.563589,'ko')
+#plt.savefig('MEP',dpi=600,bbox_inches='tight')
+#plt.show()
 
 print('Time Elapsed =',time.time()-zeroethdimension,'seconds')
 
